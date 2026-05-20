@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>FrameForge — AI Video Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+  :root { --bg:#080b14;--surface:#0e1320;--surface2:#141926;--border:#1e2638;--accent:#e8ff47;--accent2:#ff6b35;--text:#eef1f8;--muted:#6b7694; }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;overflow-x:hidden;}
+  body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(232,255,71,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(232,255,71,0.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+  nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:16px 32px;background:rgba(8,11,20,0.9);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);}
+  .logo{font-family:'Syne',sans-serif;font-weight:800;font-size:20px;color:var(--accent);}
+  .logo span{color:var(--text);}
+  .hero{position:relative;padding:70px 32px 40px;text-align:center;z-index:1;}
+  .hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(232,255,71,0.08);border:1px solid rgba(232,255,71,0.2);color:var(--accent);font-size:12px;padding:6px 14px;border-radius:100px;margin-bottom:22px;}
+  h1{font-family:'Syne',sans-serif;font-size:clamp(34px,6vw,72px);font-weight:800;line-height:1.05;letter-spacing:-2px;}
+  h1 em{font-style:normal;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+  .hero-sub{margin:16px auto 0;max-width:480px;color:var(--muted);font-size:15px;line-height:1.7;}
+  .generator{max-width:860px;margin:36px auto;padding:0 16px;position:relative;z-index:1;}
+  .gen-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;overflow:hidden;box-shadow:0 40px 80px rgba(0,0,0,0.5);}
+  .tabs{display:flex;border-bottom:1px solid var(--border);padding:0 20px;}
+  .tab-btn{background:none;border:none;cursor:pointer;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;padding:15px 16px;position:relative;transition:color .2s;}
+  .tab-btn.active{color:var(--text);}
+  .tab-btn.active::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:2px;background:var(--accent);}
+  .input-area{padding:22px;}
+  .lbl{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
+  textarea{width:100%;min-height:100px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;line-height:1.6;padding:13px;resize:none;outline:none;transition:border-color .2s;}
+  textarea:focus{border-color:rgba(232,255,71,0.4);}
+  textarea::placeholder{color:var(--muted);}
+  .controls-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:16px;}
+  .ctrl-group label{display:block;font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
+  select{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;padding:9px 12px;outline:none;cursor:pointer;appearance:none;}
+  .presets-label{font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-top:18px;margin-bottom:8px;display:block;}
+  .presets-row{display:flex;gap:7px;flex-wrap:wrap;}
+  .preset-chip{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer;transition:all .2s;color:var(--muted);}
+  .preset-chip:hover,.preset-chip.active{border-color:var(--accent);color:var(--accent);background:rgba(232,255,71,0.07);}
+  .upload-strip{border:1.5px dashed var(--border);border-radius:12px;padding:18px;display:flex;align-items:center;gap:14px;cursor:pointer;transition:all .2s;margin-bottom:14px;}
+  .upload-strip:hover{border-color:rgba(232,255,71,0.35);background:rgba(232,255,71,0.03);}
+  .upload-icon{width:44px;height:44px;border-radius:10px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+  .upload-text strong{display:block;font-size:13px;font-weight:600;margin-bottom:2px;}
+  .upload-text span{font-size:12px;color:var(--muted);}
+  .gen-footer{padding:0 22px 22px;display:flex;gap:12px;}
+  .gen-btn{flex:1;background:var(--accent);color:#080b14;border:none;border-radius:12px;font-family:'Syne',sans-serif;font-weight:700;font-size:15px;padding:15px;cursor:pointer;transition:transform .15s,box-shadow .15s;display:flex;align-items:center;justify-content:center;gap:8px;}
+  .gen-btn:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(232,255,71,0.3);}
+  .gen-btn:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+  .progress-wrap{padding:0 22px 18px;}
+  .progress-bar-bg{background:var(--surface2);border-radius:100px;height:5px;overflow:hidden;}
+  .progress-bar{height:100%;border-radius:100px;background:linear-gradient(90deg,var(--accent),var(--accent2));width:0%;transition:width .5s ease;}
+  .progress-info{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-top:7px;}
+  .status-msg{padding:0 22px 14px;font-size:13px;}
+  .status-msg.success{color:#4ade80;}
+  .status-msg.error{color:#f87171;}
+  .output-section{max-width:860px;margin:0 auto 60px;padding:0 16px;position:relative;z-index:1;}
+  .output-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+  .output-header h2{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;}
+  .video-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px;}
+  .video-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;transition:transform .2s,box-shadow .2s;}
+  .video-card:hover{transform:translateY(-3px);box-shadow:0 16px 32px rgba(0,0,0,0.4);border-color:rgba(232,255,71,0.2);}
+  video{width:100%;aspect-ratio:16/9;background:#000;display:block;}
+  .video-info{padding:13px;}
+  .video-title{font-size:12px;font-weight:600;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--muted);}
+  .video-actions{display:flex;gap:7px;margin-top:9px;}
+  .action-btn{flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:8px;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif;display:flex;align-items:center;justify-content:center;gap:4px;}
+  .action-btn.dl{background:rgba(232,255,71,0.1);border-color:rgba(232,255,71,0.3);color:var(--accent);}
+  .action-btn.dl:hover{background:rgba(232,255,71,0.2);}
+  .empty-state{text-align:center;padding:50px 20px;color:var(--muted);font-size:13px;}
+  .empty-state div{font-size:34px;margin-bottom:10px;}
+  footer{border-top:1px solid var(--border);padding:28px 32px;display:flex;align-items:center;justify-content:space-between;position:relative;z-index:1;}
+  footer p{font-size:13px;color:var(--muted);}
+</style>
+</head>
+<body>
+<nav>
+  <div class="logo">Frame<span>Forge</span></div>
+  <span style="font-size:12px;color:var(--muted);">Powered by FAL.ai ✦</span>
+</nav>
+<section class="hero">
+  <div class="hero-badge">✦ Real AI · Free · Download Instantly</div>
+  <h1>Generate <em>AI Videos</em><br/>in Seconds</h1>
+  <p class="hero-sub">Type a prompt or upload an image. Get a real AI video. Download it free.</p>
+</section>
+<section class="generator">
+  <div class="gen-card">
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab(this,'text')">✦ Text to Video</button>
+      <button class="tab-btn" onclick="switchTab(this,'image')">⬡ Image to Video</button>
+    </div>
+    <div id="tab-text">
+      <div class="input-area">
+        <div class="lbl">Video Prompt</div>
+        <textarea id="promptText" maxlength="500" placeholder="e.g. An orphan girl glows with golden energy in a dark forest, 2D anime style..."></textarea>
+        <span class="presets-label">Style Presets</span>
+        <div class="presets-row">
+          <div class="preset-chip active" onclick="selectPreset(this,'2D anime cinematic style')">2D Anime</div>
+          <div class="preset-chip" onclick="selectPreset(this,'Studio Ghibli style')">Ghibli</div>
+          <div class="preset-chip" onclick="selectPreset(this,'dark fantasy dramatic lighting')">Dark Fantasy</div>
+          <div class="preset-chip" onclick="selectPreset(this,'epic cinematic widescreen')">Cinematic</div>
+          <div class="preset-chip" onclick="selectPreset(this,'watercolor art style')">Watercolor</div>
+          <div class="preset-chip" onclick="selectPreset(this,'neon cyberpunk aesthetic')">Cyberpunk</div>
+        </div>
+        <div class="controls-grid">
+          <div class="ctrl-group"><label>Duration</label><select id="duration"><option value="8">8 seconds</option><option value="5">5 seconds</option></select></div>
+          <div class="ctrl-group"><label>Aspect Ratio</label><select id="aspect"><option value="16:9">16:9 Landscape</option><option value="9:16">9:16 Portrait</option><option value="1:1">1:1 Square</option></select></div>
+          <div class="ctrl-group"><label>Motion</label><select id="motion"><option value="medium">Medium</option><option value="subtle">Subtle</option><option value="strong">Strong</option></select></div>
+        </div>
+      </div>
+    </div>
+    <div id="tab-image" style="display:none;">
+      <div class="input-area">
+        <div class="upload-strip" onclick="document.getElementById('imgUpload').click()">
+          <div class="upload-icon">🖼️</div>
+          <div class="upload-text">
+            <strong id="uploadLabel">Upload Your Image</strong>
+            <span id="uploadSub">Click to upload — JPG, PNG, WEBP</span>
+          </div>
+          <input type="file" id="imgUpload" accept="image/*" style="display:none;" onchange="handleImg(this)"/>
+        </div>
+        <div class="lbl">Motion Description</div>
+        <textarea id="imgPrompt" placeholder="Describe the motion... e.g. Camera pans right, golden particles rise" style="min-height:80px;"></textarea>
+      </div>
+    </div>
+    <div class="progress-wrap" id="progressWrap" style="display:none;">
+      <div class="progress-bar-bg"><div class="progress-bar" id="progressBar"></div></div>
+      <div class="progress-info"><span id="progressLabel">Starting...</span><span id="progressPct">0%</span></div>
+    </div>
+    <div class="status-msg" id="statusMsg" style="display:none;"></div>
+    <div class="gen-footer">
+      <button class="gen-btn" id="genBtn" onclick="generate()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5,3 19,12 5,21"/></svg>
+        Generate Video — FREE
+      </button>
+    </div>
+  </div>
+</section>
+<section class="output-section">
+  <div class="output-header">
+    <h2>Your Videos</h2>
+    <span id="videoCount" style="font-size:13px;color:var(--muted);">0 videos</span>
+  </div>
+  <div class="video-grid" id="videoGrid">
+    <div class="empty-state" id="emptyState">
+      <div>🎬</div>
+      Your generated videos will appear here.<br/>Hit Generate to create your first one!
+    </div>
+  </div>
+</section>
+<footer>
+  <p>© 2025 FrameForge — Free AI Video Generation</p>
+  <p style="font-size:12px;color:var(--muted);">Powered by FAL.ai</p>
+</footer>
+<script>
+  let activeTab='text',uploadedImageUrl=null,videoCount=0,activePreset='2D anime cinematic style';
+  function switchTab(btn,tab){document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');document.getElementById('tab-text').style.display=tab==='text'?'block':'none';document.getElementById('tab-image').style.display=tab==='image'?'block':'none';activeTab=tab;}
+  function selectPreset(chip,style){document.querySelectorAll('.preset-chip').forEach(c=>c.classList.remove('active'));chip.classList.add('active');activePreset=style;}
+  function handleImg(input){const file=input.files[0];if(!file)return;document.getElementById('uploadLabel').textContent=file.name;document.getElementById('uploadSub').textContent='Image ready ✓';input.closest('.upload-strip').style.borderColor='rgba(74,222,128,0.5)';const reader=new FileReader();reader.onload=e=>{uploadedImageUrl=e.target.result;};reader.readAsDataURL(file);}
+  function setProgress(pct,label){document.getElementById('progressBar').style.width=pct+'%';document.getElementById('progressLabel').textContent=label;document.getElementById('progressPct').textContent=pct+'%';}
+  function showStatus(msg,type){const el=document.getElementById('statusMsg');el.textContent=msg;el.className='status-msg '+type;el.style.display='block';}
+  async function generate(){
+    const btn=document.getElementById('genBtn');
+    document.getElementById('statusMsg').style.display='none';
+    document.getElementById('progressWrap').style.display='block';
+    if(activeTab==='text'){
+      const prompt=document.getElementById('promptText').value.trim();
+      if(!prompt){showStatus('⚠️ Please enter a prompt first!','error');document.getElementById('progressWrap').style.display='none';return;}
+      btn.disabled=true;btn.textContent='⏳ Generating...';
+      const steps=[[10,'Analyzing prompt...'],[25,'Building scene...'],[45,'Rendering frames...'],[65,'Processing video...'],[85,'Finalizing...']];
+      let si=0;const iv=setInterval(()=>{if(si<steps.length){setProgress(steps[si][0],steps[si][1]);si++;}},9000);
+      try{
+        const res=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt,style:activePreset,duration:document.getElementById('duration').value,aspect_ratio:document.getElementById('aspect').value})});
+        clearInterval(iv);const data=await res.json();
+        if(data.success&&data.videoUrl){setProgress(100,'Done! ✓');addVideoCard(data.videoUrl,prompt);showStatus('✅ Video ready! Watch and download below.','success');}
+        else{showStatus('❌ '+(data.error||'Something went wrong'),'error');setProgress(0,'');}
+      }catch(err){clearInterval(iv);showStatus('❌ Network error. Please try again.','error');}
+    }else{
+      if(!uploadedImageUrl){showStatus('⚠️ Please upload an image first!','error');document.getElementById('progressWrap').style.display='none';return;}
+      btn.disabled=true;btn.textContent='⏳ Generating...';setProgress(20,'Uploading image...');
+      try{
+        const res=await fetch('/api/image-to-video',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({imageUrl:uploadedImageUrl,prompt:document.getElementById('imgPrompt').value||'Animate with smooth cinematic motion'})});
+        const data=await res.json();
+        if(data.success&&data.videoUrl){setProgress(100,'Done! ✓');addVideoCard(data.videoUrl,'Image to Video');showStatus('✅ Video ready!','success');}
+        else{showStatus('❌ '+(data.error||'Something went wrong'),'error');}
+      }catch(err){showStatus('❌ Network error.','error');}
+    }
+    btn.disabled=false;btn.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5,3 19,12 5,21"/></svg> Generate Video — FREE';
+  }
+  function addVideoCard(videoUrl,prompt){videoCount++;document.getElementById('emptyState')?.remove();document.getElementById('videoCount').textContent=videoCount+' video'+(videoCount>1?'s':'');const card=document.createElement('div');card.className='video-card';card.innerHTML=`<video src="${videoUrl}" controls playsinline></video><div class="video-info"><div class="video-title">${prompt.slice(0,55)}${prompt.length>55?'...':''}</div><div class="video-actions"><button class="action-btn dl" onclick="dlVideo('${videoUrl}','video_${videoCount}.mp4')">⬇ Download</button><button class="action-btn" onclick="shareVideo('${videoUrl}')">↗ Share</button></div></div>`;document.getElementById('videoGrid').prepend(card);}
+  function dlVideo(url,name){const a=document.createElement('a');a.href=url;a.download=name;a.target='_blank';document.body.appendChild(a);a.click();document.body.removeChild(a);}
+  function shareVideo(url){if(navigator.share){navigator.share({title:'My AI Video',url});}else{navigator.clipboard.writeText(url);alert('Video URL copied!');}}
+</script>
+</body>
+  </html>
